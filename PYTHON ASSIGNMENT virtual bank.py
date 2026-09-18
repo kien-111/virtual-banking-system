@@ -6,36 +6,6 @@ import pandas as pd
 import datetime
 import os
 import time
-import smtplib
-from email.mime.text import MIMEText
-
-# ==========================================
-# 0. EMAIL CONFIGURATION (READ CAREFULLY)
-# ==========================================
-# To make emails work, replace these with your real details.
-# DO NOT use your normal Gmail password. Generate an "App Password" from Google Account Security.
-SENDER_EMAIL = "your_email@gmail.com"
-APP_PASSWORD = "your_16_digit_app_password"
-
-def send_otp_email(receiver_email, otp):
-    """Sends the OTP via email. Returns True if successful, False otherwise."""
-    if SENDER_EMAIL == "your_email@gmail.com":
-        return False # Fails safely if you haven't set up your email yet
-
-    try:
-        msg = MIMEText(f"Your Secure Virtual Bank authorization code is: {otp}\n\nDo not share this code with anyone.")
-        msg['Subject'] = 'Virtual Bank OTP Verification'
-        msg['From'] = f"Virtual Bank <{SENDER_EMAIL}>"
-        msg['To'] = receiver_email
-        
-        # Connect to Gmail's secure SMTP server
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
-            server.login(SENDER_EMAIL, APP_PASSWORD)
-            server.send_message(msg)
-        return True
-    except Exception as e:
-        print(f"Email failed: {e}")
-        return False
 
 # ==========================================
 # 1. ULTRA-SMOOTH APPLE UI (CSS INJECTION)
@@ -188,7 +158,7 @@ if not st.session_state.logged_in:
             st.markdown("<p style='text-align: center; color: gray;'>Register a new virtual account.</p>", unsafe_allow_html=True)
             with st.form("register_form", clear_on_submit=True):
                 new_username = st.text_input("Choose a Username")
-                new_email = st.text_input("Email Address")
+                new_email = st.text_input("Email Address (Optional)")
                 new_password = st.text_input("Create Password", type="password", autocomplete="new-password")
                 confirm_password = st.text_input("Confirm Password", type="password", autocomplete="new-password")
                 register_button = st.form_submit_button("Create Account", use_container_width=True)
@@ -196,12 +166,10 @@ if not st.session_state.logged_in:
                 if register_button:
                     if new_username in data:
                         st.error("Username already exists. Please choose another.")
-                    elif not new_username or not new_email or not new_password:
-                        st.error("All fields are required.")
+                    elif not new_username or not new_password:
+                        st.error("Username and Password are required.")
                     elif new_password != confirm_password:
                         st.error("Passwords do not match.")
-                    elif "@" not in new_email:
-                        st.error("Please enter a valid email address.")
                     else:
                         # Create new user with RM 1000 Welcome Bonus
                         data[new_username] = {
@@ -218,11 +186,13 @@ if not st.session_state.logged_in:
 else:
     user = st.session_state.current_user
     user_data = data[user]
-    user_email = user_data.get('email', 'No email registered')
+    
+    # Check if user has an email saved, otherwise just show username
+    display_email = f" ({user_data['email']})" if user_data.get('email') else ""
 
     colA, colB = st.columns([3, 1])
     with colA:
-        st.caption(f"Welcome back, {user.capitalize()} ({user_email})")
+        st.caption(f"Welcome back, {user.capitalize()}{display_email}")
         st.markdown(f"<h1 style='font-size: 3.5rem; margin-top: -15px;'>RM {user_data['balance']:,.2f}</h1>", unsafe_allow_html=True)
     with colB:
         st.write("<br>", unsafe_allow_html=True)
@@ -250,11 +220,7 @@ else:
                 else:
                     st.session_state.otp = generate_otp()
                     st.session_state.pending_action = {"type": "transfer", "target": target_user, "amount": transfer_amount}
-                    
-                    if send_otp_email(user_email, st.session_state.otp):
-                        st.success(f"Verification code sent to {user_email}. Enter it in the OTP tab.")
-                    else:
-                        st.warning(f"Email system inactive. Your bypass OTP is: {st.session_state.otp}")
+                    st.success(f"Verification code generated: {st.session_state.otp}. Enter it in the OTP tab.")
 
         elif action == "🧾 Pay Bill":
             biller = st.selectbox("Biller", ["TNB", "Syabas", "Unifi", "Maxis"])
@@ -264,11 +230,7 @@ else:
                 else:
                     st.session_state.otp = generate_otp()
                     st.session_state.pending_action = {"type": "bill", "biller": biller, "amount": bill_amount}
-                    
-                    if send_otp_email(user_email, st.session_state.otp):
-                        st.success(f"Verification code sent to {user_email}. Enter it in the OTP tab.")
-                    else:
-                        st.warning(f"Email system inactive. Your bypass OTP is: {st.session_state.otp}")
+                    st.success(f"Verification code generated: {st.session_state.otp}. Enter it in the OTP tab.")
 
         elif action == "💳 Card Payment":
             card_num = st.text_input("Card Number (Last 4)", max_chars=4)
@@ -279,11 +241,7 @@ else:
                 else:
                     st.session_state.otp = generate_otp()
                     st.session_state.pending_action = {"type": "credit_card", "card": card_num, "amount": cc_amount}
-                    
-                    if send_otp_email(user_email, st.session_state.otp):
-                        st.success(f"Verification code sent to {user_email}. Enter it in the OTP tab.")
-                    else:
-                        st.warning(f"Email system inactive. Your bypass OTP is: {st.session_state.otp}")
+                    st.success(f"Verification code generated: {st.session_state.otp}. Enter it in the OTP tab.")
 
         elif action == "📥 Add Funds":
             deposit_amount = st.number_input("Amount (RM)", min_value=1.0, step=50.0)
