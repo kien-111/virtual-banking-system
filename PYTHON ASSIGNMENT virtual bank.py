@@ -12,7 +12,7 @@ import os
 def apply_ultra_smooth_design():
     st.markdown("""
     <style>
-    /* 1. Import Apple-style Web Font (Inter) for Windows users */
+    /* 1. Import Apple-style Web Font (Inter) */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
     * {
@@ -48,7 +48,7 @@ def apply_ultra_smooth_design():
         transform: scale(0.97) !important;
     }
 
-    /* 4. Fix Inputs (Keeps the Password Eye Icon visible!) */
+    /* 4. Fix Inputs (Keeps the Password Eye Icon visible) */
     div[data-baseweb="input"] > div, div[data-baseweb="select"] > div {
         border-radius: 14px !important;
         transition: all 0.3s ease !important;
@@ -58,7 +58,14 @@ def apply_ultra_smooth_design():
         box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2) !important;
     }
     
-    /* 5. Hide annoying default Streamlit headers */
+    /* 5. Apple Wallet Style Image Banners */
+    [data-testid="stImage"] img {
+        border-radius: 16px !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+        margin-bottom: 15px !important;
+    }
+    
+    /* 6. Hide annoying default Streamlit headers */
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
@@ -126,7 +133,7 @@ if not st.session_state.logged_in:
     with col2:
         with st.form("login_form", clear_on_submit=True):
             username = st.text_input("Username")
-            password = st.text_input("Password", type="password") # Natively adds the eye icon
+            password = st.text_input("Password", type="password")
             submit_button = st.form_submit_button("Continue", use_container_width=True)
 
             if submit_button:
@@ -155,7 +162,7 @@ else:
     user = st.session_state.current_user
     user_data = data[user]
 
-    # GIANT BALANCE AT TOP (No more hiding in the sidebar)
+    # GIANT BALANCE AT TOP
     colA, colB = st.columns([3, 1])
     with colA:
         st.caption(f"Welcome back, {user.capitalize()}")
@@ -172,7 +179,7 @@ else:
     # Tabs
     tab1, tab2, tab3, tab4 = st.tabs(["Services", "Activity", "Statements", "Security"])
 
-    # --- TAB 1: Action Center ---
+    # --- TAB 1: Action Center (WITH IMAGES) ---
     with tab1:
         action = st.segmented_control(
             "Actions",
@@ -183,6 +190,7 @@ else:
         st.write("<br>", unsafe_allow_html=True)
 
         if action == "💸 Send Money":
+            st.image("https://images.unsplash.com/photo-1613243555988-441166d4d6fd?auto=format&fit=crop&w=800&q=80", use_container_width=True)
             target_user = st.text_input("To (Username)")
             transfer_amount = st.number_input("Amount (RM)", min_value=1.0, step=10.0)
             if st.button("Review Transfer"):
@@ -195,6 +203,7 @@ else:
                     st.success(f"Verification code sent: {st.session_state.otp}. Enter it in the Security tab.")
 
         elif action == "🧾 Pay Bill":
+            st.image("https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80", use_container_width=True)
             biller = st.selectbox("Biller", ["TNB", "Syabas", "Unifi", "Maxis"])
             bill_amount = st.number_input("Amount (RM)", min_value=1.0, step=10.0)
             if st.button("Review Payment"):
@@ -205,6 +214,7 @@ else:
                     st.success(f"Verification code sent: {st.session_state.otp}. Enter it in the Security tab.")
 
         elif action == "💳 Card Payment":
+            st.image("https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=800&q=80", use_container_width=True)
             card_num = st.text_input("Card Number (Last 4)", max_chars=4)
             cc_amount = st.number_input("Amount (RM)", min_value=1.0, step=10.0)
             if st.button("Review Payment"):
@@ -216,6 +226,7 @@ else:
                     st.success(f"Verification code sent: {st.session_state.otp}. Enter it in the Security tab.")
 
         elif action == "📥 Add Funds":
+            st.image("https://images.unsplash.com/photo-1580048915913-4f8f5cb481c4?auto=format&fit=crop&w=800&q=80", use_container_width=True)
             deposit_amount = st.number_input("Amount (RM)", min_value=1.0, step=50.0)
             if st.button("Add to Apple Cash"):
                 data[user]['balance'] += deposit_amount
