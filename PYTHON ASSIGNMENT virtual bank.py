@@ -5,6 +5,7 @@ import random
 import pandas as pd
 import datetime
 import os
+import time
 
 # ==========================================
 # 0. ULTRA-SMOOTH APPLE UI (CSS INJECTION)
@@ -77,8 +78,8 @@ def load_data():
             return json.load(file)
     else:
         default_data = {
-            "user1": {"password": hash_password("password123"), "balance": 5000.0, "history": [], "locked": False},
-            "user2": {"password": hash_password("password123"), "balance": 2000.0, "history": [], "locked": False}
+            "user1": {"password": hash_password("password123"), "balance": 5000.0, "history": [], "locked_until": 0},
+            "user2": {"password": hash_password("password123"), "balance": 2000.0, "history": [], "locked_until": 0}
         }
         save_data(default_data)
         return default_data
@@ -127,16 +128,26 @@ if not st.session_state.logged_in:
     with col2:
         with st.form("login_form", clear_on_submit=True):
             username = st.text_input("Username")
-            
-            # autocomplete="current-password" blocks Google from recommending a strong password
             password = st.text_input("Password", type="password", autocomplete="current-password")
             
             submit_button = st.form_submit_button("Continue", use_container_width=True)
 
             if submit_button:
                 if username in data:
-                    if data[username].get('locked', False):
-                        st.error("Account locked.")
+                    current_time = time.time()
+                    
+                    # Fix legacy permanent lock if it exists in JSON
+                    if data[username].get('locked') is True:
+                        data[username]['locked'] = False
+                        data[username]['locked_until'] = 0
+                        save_data(data)
+                        
+                    locked_until = data[username].get('locked_until', 0)
+                    
+                    # Check 20-second cooldown
+                    if current_time < locked_until:
+                        remaining = int(locked_until - current_time)
+                        st.error(f"Account temporarily locked. Please wait {remaining} seconds.")
                     elif data[username]['password'] == hash_password(password):
                         st.session_state.logged_in = True
                         st.session_state.current_user = username
@@ -146,9 +157,10 @@ if not st.session_state.logged_in:
                         attempts = st.session_state.login_attempts.get(username, 0) + 1
                         st.session_state.login_attempts[username] = attempts
                         if attempts >= 3:
-                            data[username]['locked'] = True
+                            data[username]['locked_until'] = current_time + 20
+                            st.session_state.login_attempts[username] = 0 # Reset attempts for next try
                             save_data(data)
-                            st.error("Account locked.")
+                            st.error("Too many failed attempts. Account locked for 20 seconds.")
                         else:
                             st.error(f"Incorrect password. {3 - attempts} attempts left.")
                 else:
@@ -173,8 +185,8 @@ else:
             
     st.divider()
 
-    # Tabs
-    tab1, tab2, tab3, tab4 = st.tabs(["Services", "Activity", "Statements", "Security"])
+    # Tabs (Updated Security to OTP)
+    tab1, tab2, tab3, tab4 = st.tabs(["Services", "Activity", "Statements", "OTP"])
 
     # --- TAB 1: Action Center ---
     with tab1:
@@ -196,7 +208,7 @@ else:
                 else:
                     st.session_state.otp = generate_otp()
                     st.session_state.pending_action = {"type": "transfer", "target": target_user, "amount": transfer_amount}
-                    st.success(f"Verification code sent: {st.session_state.otp}. Enter it in the Security tab.")
+                    st.success(f"Verification code sent: {st.session_state.otp}. Enter it in the OTP tab.")
 
         elif action == "🧾 Pay Bill":
             biller = st.selectbox("Biller", ["TNB", "Syabas", "Unifi", "Maxis"])
@@ -206,7 +218,7 @@ else:
                 else:
                     st.session_state.otp = generate_otp()
                     st.session_state.pending_action = {"type": "bill", "biller": biller, "amount": bill_amount}
-                    st.success(f"Verification code sent: {st.session_state.otp}. Enter it in the Security tab.")
+                    st.success(f"Verification code sent: {st.session_state.otp}. Enter it in the OTP tab.")
 
         elif action == "💳 Card Payment":
             card_num = st.text_input("Card Number (Last 4)", max_chars=4)
@@ -217,7 +229,7 @@ else:
                 else:
                     st.session_state.otp = generate_otp()
                     st.session_state.pending_action = {"type": "credit_card", "card": card_num, "amount": cc_amount}
-                    st.success(f"Verification code sent: {st.session_state.otp}. Enter it in the Security tab.")
+                    st.success(f"Verification code sent: {st.session_state.otp}. Enter it in the OTP tab.")
 
         elif action == "📥 Add Funds":
             deposit_amount = st.number_input("Amount (RM)", min_value=1.0, step=50.0)
