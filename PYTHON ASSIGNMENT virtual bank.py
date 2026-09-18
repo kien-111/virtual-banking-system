@@ -12,34 +12,32 @@ import os
 def apply_smooth_design():
     st.markdown("""
     <style>
-    /* Apple system fonts */
-    html, body, [class*="css"] {
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        -webkit-font-smoothing: antialiased;
+    /* Force Apple system fonts everywhere */
+    * {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
     }
     
-    /* Smooth, rounded buttons with hover bounce */
+    /* Force smooth, rounded buttons with hover bounce */
     div[data-testid="stButton"] > button {
-        border-radius: 20px;
-        font-weight: 600;
-        transition: all 0.2s ease;
-        border: 1px solid rgba(128, 128, 128, 0.2);
+        border-radius: 20px !important;
+        font-weight: 600 !important;
+        border: 1px solid rgba(128, 128, 128, 0.3) !important;
+        transition: all 0.3s ease !important;
     }
     div[data-testid="stButton"] > button:hover {
-        transform: scale(1.02);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        transform: scale(1.03) !important;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15) !important;
+        border-color: rgba(128, 128, 128, 0.5) !important;
     }
 
-    /* Style the horizontal radio buttons to look like icon selectors */
-    div[data-testid="stRadio"] > div {
-        display: flex;
-        gap: 10px;
-        background-color: transparent;
+    /* Force input field rounding */
+    div[data-baseweb="input"] > div {
+        border-radius: 12px !important;
     }
     
-    /* Input field rounding */
-    div[data-baseweb="input"] {
-        border-radius: 12px;
+    /* Clean up the radio button background */
+    div[data-testid="stRadio"] > div {
+        background-color: transparent !important;
     }
     </style>
     """, unsafe_allow_html=True)
